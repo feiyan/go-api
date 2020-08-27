@@ -29,12 +29,15 @@ var SubData = []*DetailData{
 	},
 }
 
+// return one region information
 func Detail(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"err_code": 0,
 		"err_msg":  "Success",
 	})
 }
+
+// return a list of regions
 func Sub(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"err_code": 0,
