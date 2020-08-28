@@ -7,9 +7,15 @@ import (
 )
 
 func SetupRouter() *gin.Engine {
+	// init gin engine
 	r := gin.Default()
+
+	// middleware logs
 	r.Use(middleware.LoggerToFile())
-	r.GET("/region/detail/:id", region.Detail)
-	r.GET("/region/sub", region.Sub)
+
+	// route group region
+	regionGroup := r.Group("/region")
+	regionGroup.GET("/detail", region.Detail)
+	regionGroup.GET("/sub", region.Sub)
 	return r
 }

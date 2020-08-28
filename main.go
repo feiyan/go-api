@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	orm "gogin/app/database"
 	"gogin/app/route"
 )
 
@@ -11,4 +12,5 @@ func main() {
 	if err := r.Run(); err != nil {
 		fmt.Printf("startup service failed, err:%v\n", err)
 	}
+	defer orm.Mysql.Close()
 }
