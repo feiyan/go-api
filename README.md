@@ -28,6 +28,3 @@ A Restful API Services Based on Golang/Gin
 ### Extra 不实现
 - 前台： Python 或者 PHP渲染
 - 后台： Vue
-
-
-Last Modify：2020-08-29
