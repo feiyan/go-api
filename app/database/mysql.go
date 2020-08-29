@@ -21,5 +21,5 @@ func init() {
 		fmt.Printf("database error %v", Mysql.Error)
 	}
 
-	Mysql.LogMode(true)
+	// Mysql.LogMode(true)
 }
