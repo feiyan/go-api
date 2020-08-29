@@ -17,8 +17,10 @@ type reqDetail struct {
 	Id uint `form:"id" json:"id" binding:"required"`
 }
 
+// binding: required, 必填
+// binding: omitempty, 空时忽略
 type reqSub struct {
-	Pid uint `validate:"required"`
+	Pid uint `form:"pid" json:"pid" binding:"omitempty"`
 }
 
 type DetailData struct {
@@ -40,6 +42,7 @@ var SubData = []*DetailData{
 var validate *validator.Validate
 
 // add new region
+// test with CURL: curl -d "id=110200&pid=110000&name=Chaoyang" "http://localhost:8080/region/add"
 func Add(c *gin.Context) {
 	var req reqAdd
 	if err := c.ShouldBind(&req); err != nil {
@@ -54,7 +57,7 @@ func Add(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"err_code": 1000,
-			"err_msg":  "Insert Data Failure",
+			"err_msg":  "Insert Data Failure: " + err.Error(),
 		})
 		return
 	}
@@ -100,15 +103,14 @@ func Detail(c *gin.Context) {
 func Sub(c *gin.Context) {
 	// check request params
 	var req reqSub
-	if err := c.ShouldBind(&req); err != nil {
+	if err := c.Bind(&req); err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
 		return
 	}
 
 	// fetch data
 	region := model.Region{}
-	region.Pid = req.Pid
-	data, err := region.List()
+	data, err := region.FetchByPid(req.Pid)
 
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{

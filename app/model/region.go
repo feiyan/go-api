@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	orm "gogin/app/database"
 )
 
@@ -18,6 +19,9 @@ func (region *Region) TableName() string {
 
 // insert
 func (region *Region) Insert() (id uint, err error) {
+	if _, err := region.FetchOne(); err == nil {
+		return 0, fmt.Errorf("id %d is already exists", region.Id)
+	}
 	result := orm.Mysql.Create(&region)
 	id = region.Id
 	if result.Error != nil {
@@ -27,9 +31,9 @@ func (region *Region) Insert() (id uint, err error) {
 	return
 }
 
-// select
-func (region *Region) List() (returnData []Region, err error) {
-	if err = orm.Mysql.Find(&returnData).Error; err != nil {
+// fetch regions by Pid
+func (region *Region) FetchByPid(pid uint) (returnData []Region, err error) {
+	if err = orm.Mysql.Where("pid = ?", pid).Find(&returnData).Error; err != nil {
 		return
 	}
 	return

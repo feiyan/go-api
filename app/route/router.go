@@ -15,6 +15,7 @@ func SetupRouter() *gin.Engine {
 
 	// route group region
 	regionGroup := r.Group("/region")
+	regionGroup.POST("/add", region.Add)
 	regionGroup.GET("/detail", region.Detail)
 	regionGroup.GET("/sub", region.Sub)
 	return r
