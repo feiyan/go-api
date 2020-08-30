@@ -1,10 +1,14 @@
 package region
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"gogin/app/model"
+	"gogin/app/util"
 	"net/http"
+	"strconv"
 )
 
 type reqAdd struct {
@@ -23,20 +27,9 @@ type reqSub struct {
 	Pid uint `form:"pid" json:"pid" binding:"omitempty"`
 }
 
-type DetailData struct {
+type repDetail struct {
 	Id   uint   `json:"id"`
 	Name string `json:"name"`
-}
-
-var SubData = []*DetailData{
-	{
-		Id:   1,
-		Name: "Beijing",
-	},
-	{
-		Id:   2,
-		Name: "Shanghai",
-	},
 }
 
 var validate *validator.Validate
@@ -78,17 +71,36 @@ func Detail(c *gin.Context) {
 		return
 	}
 
-	// fetch data
-	region := model.Region{}
-	region.Id = req.Id
-	data, err := region.FetchOne()
-
+	// redis cache
+	var data repDetail
+	r := util.Redis
+	cacheKey := "region_detail_" + strconv.Itoa(int(req.Id))
+	jsonStr, err := r.Get(cacheKey).Result()
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"err_code": 1000,
-			"err_msg":  "Fetch Data Failure: " + err.Error(),
-		})
-		return
+		fmt.Println("Redis Error: " + err.Error())
+	}
+	fmt.Println(jsonStr)
+	if err != nil {
+		// fetch data
+		region := model.Region{}
+		region.Id = req.Id
+		data, err := region.FetchOne()
+
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"err_code": 1000,
+				"err_msg":  "Fetch Data Failure: " + err.Error(),
+			})
+			return
+		}
+
+		// convert struct to json
+		// set json val to cacheKey
+		jsonStr, _ := json.Marshal(data)
+		r.Set(cacheKey, jsonStr, 600)
+	} else {
+		// convert json to struct
+		json.Unmarshal([]byte(jsonStr), &data)
 	}
 
 	// return data
