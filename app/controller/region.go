@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
+	"gogin/app/middleware"
 	"gogin/app/model"
 	"gogin/app/util"
 	"net/http"
@@ -71,6 +72,8 @@ func Detail(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
 		return
 	}
+
+	middleware.Message("fetch region detail " + strconv.Itoa(int(req.Id)))
 
 	// redis cache
 	var data repDetail
