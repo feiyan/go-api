@@ -2,13 +2,13 @@ package region
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"gogin/app/model"
 	"gogin/app/util"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type reqAdd struct {
@@ -29,6 +29,7 @@ type reqSub struct {
 
 type repDetail struct {
 	Id   uint   `json:"id"`
+	Pid  uint   `json:"pid"`
 	Name string `json:"name"`
 }
 
@@ -73,18 +74,14 @@ func Detail(c *gin.Context) {
 
 	// redis cache
 	var data repDetail
-	r := util.Redis
+	r := util.RedisClient
 	cacheKey := "region_detail_" + strconv.Itoa(int(req.Id))
 	jsonStr, err := r.Get(cacheKey).Result()
-	if err != nil {
-		fmt.Println("Redis Error: " + err.Error())
-	}
-	fmt.Println(jsonStr)
 	if err != nil {
 		// fetch data
 		region := model.Region{}
 		region.Id = req.Id
-		data, err := region.FetchOne()
+		returnData, err := region.FetchOne()
 
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
@@ -96,8 +93,13 @@ func Detail(c *gin.Context) {
 
 		// convert struct to json
 		// set json val to cacheKey
+		data.Id = returnData.Id
+		data.Pid = returnData.Pid
+		data.Name = returnData.Name
 		jsonStr, _ := json.Marshal(data)
-		r.Set(cacheKey, jsonStr, 600)
+
+		// 需要时间的地方使用time库
+		r.Set(cacheKey, jsonStr, time.Hour)
 	} else {
 		// convert json to struct
 		json.Unmarshal([]byte(jsonStr), &data)
