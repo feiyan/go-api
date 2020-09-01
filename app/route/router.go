@@ -18,5 +18,6 @@ func SetupRouter() *gin.Engine {
 	regionGroup.POST("/add", region.Add)
 	regionGroup.GET("/detail", region.Detail)
 	regionGroup.GET("/sub", region.Sub)
+	regionGroup.GET("/tree", region.Tree)
 	return r
 }

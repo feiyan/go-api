@@ -36,10 +36,19 @@ func (region *Region) Insert() (id uint, err error) {
 	return
 }
 
+// fetch all regions
+func (region *Region) FetchAll() (returnData []Region, err error) {
+	err = orm.Mysql.Find(&returnData).Error
+	if err != nil {
+		return
+	}
+	return
+}
+
 // fetch regions by Pid
 func (region *Region) FetchTree(pid uint) (returnData []RegionTree, err error) {
-	data, _ := region.FetchByPid(pid)
-	if data == nil {
+	data, err := region.FetchByPid(pid)
+	if err != nil {
 		return
 	}
 	for _, row := range data {

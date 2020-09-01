@@ -34,6 +34,11 @@ type repDetail struct {
 	Name string `json:"name"`
 }
 
+type repSub struct {
+	repDetail
+	Children []repSub
+}
+
 var validate *validator.Validate
 
 // add new region
@@ -116,8 +121,52 @@ func Detail(c *gin.Context) {
 	})
 }
 
-// return a list of regions
+// 递归方式获取无限级regions
+func walk(pid uint, nodes map[uint][]repSub) (returnData []repSub) {
+	if subNodes, exists := nodes[pid]; exists {
+		for _, node := range subNodes {
+			node.Children = walk(node.Id, nodes)
+			returnData = append(returnData, node)
+		}
+	}
+	return
+}
+
+// get tree with one query
 func Sub(c *gin.Context) {
+	// fetch data
+	region := model.Region{}
+	data, err := region.FetchAll()
+
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"err_code": 1000,
+			"err_msg":  "Fetch Data Failure: " + err.Error(),
+		})
+		return
+	}
+
+	// build tree
+	dataMap := make(map[uint][]repSub)
+	for _, row := range data {
+		node := repSub{}
+		node.Id = row.Id
+		node.Pid = row.Pid
+		node.Name = row.Name
+		dataMap[row.Pid] = append(dataMap[row.Pid], node)
+	}
+	retData := walk(0, dataMap)
+
+	// return data
+	c.JSON(http.StatusOK, gin.H{
+		"err_code": 0,
+		"err_msg":  "Success",
+		"data":     retData,
+	})
+}
+
+// return a list of regions
+func Tree(c *gin.Context) {
 	// check request params
 	var req reqSub
 	if err := c.Bind(&req); err != nil {
