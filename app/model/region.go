@@ -13,7 +13,7 @@ type Region struct {
 
 type RegionTree struct {
 	Region
-	Children []RegionTree
+	Children []*RegionTree
 }
 
 // setup table_name
@@ -46,18 +46,21 @@ func (region *Region) FetchAll() (returnData []Region, err error) {
 }
 
 // fetch regions by Pid
-func (region *Region) FetchTree(pid uint) (returnData []RegionTree, err error) {
+func (region *Region) FetchTree(pid uint) (returnData []*RegionTree, err error) {
 	data, err := region.FetchByPid(pid)
 	if err != nil {
 		return
 	}
 	for _, row := range data {
 		children, _ := region.FetchTree(row.Id)
-		node := RegionTree{}
-		node.Id = row.Id
-		node.Pid = row.Pid
-		node.Name = row.Name
-		node.Children = children
+		node := &RegionTree{
+			Region{
+				Id:   row.Id,
+				Pid:  row.Pid,
+				Name: row.Name,
+			},
+			children,
+		}
 		returnData = append(returnData, node)
 	}
 	return
