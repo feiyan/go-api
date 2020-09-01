@@ -2,7 +2,8 @@ package region
 
 import (
 	"encoding/json"
-	"github.com/gin-gonic/gin"
+    "fmt"
+    "github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"gogin/app/middleware"
 	"gogin/app/model"
@@ -36,7 +37,7 @@ type repDetail struct {
 
 type repSub struct {
 	repDetail
-	Children []repSub
+	Children []*repSub
 }
 
 var validate *validator.Validate
@@ -49,10 +50,11 @@ func Add(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
 		return
 	}
-	region := model.Region{}
-	region.Id = req.Id
-	region.Pid = req.Pid
-	region.Name = req.Name
+	region := model.Region{
+	    Id: req.Id,
+	    Pid: req.Pid,
+	    Name: req.Name,
+    }
 	id, err := region.Insert()
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -85,10 +87,12 @@ func Detail(c *gin.Context) {
 	r := util.RedisClient
 	cacheKey := "region_detail_" + strconv.Itoa(int(req.Id))
 	jsonStr, err := r.Get(cacheKey).Result()
+	fmt.Println(jsonStr)
 	if err != nil {
 		// fetch data
-		region := model.Region{}
-		region.Id = req.Id
+		region := model.Region{
+            Id: req.Id,
+        }
 		returnData, err := region.FetchOne()
 
 		if err != nil {
@@ -101,16 +105,18 @@ func Detail(c *gin.Context) {
 
 		// convert struct to json
 		// set json val to cacheKey
-		data.Id = returnData.Id
-		data.Pid = returnData.Pid
-		data.Name = returnData.Name
+		data = repDetail{
+            Id: returnData.Id,
+            Pid: returnData.Pid,
+            Name: returnData.Name,
+        }
 		jsonStr, _ := json.Marshal(data)
 
 		// 需要时间的地方使用time库
 		r.Set(cacheKey, jsonStr, time.Hour)
 	} else {
 		// convert json to struct
-		json.Unmarshal([]byte(jsonStr), &data)
+		_ = json.Unmarshal([]byte(jsonStr), &data)
 	}
 
 	// return data
@@ -122,8 +128,8 @@ func Detail(c *gin.Context) {
 }
 
 // 递归方式获取无限级regions
-func walk(pid uint, nodes map[uint][]repSub) (returnData []repSub) {
-	if subNodes, exists := nodes[pid]; exists {
+func walk(pid uint, nodes map[uint][]*repSub) (returnData []*repSub) {
+	if subNodes, ok := nodes[pid]; ok {
 		for _, node := range subNodes {
 			node.Children = walk(node.Id, nodes)
 			returnData = append(returnData, node)
@@ -147,13 +153,18 @@ func Sub(c *gin.Context) {
 	}
 
 	// build tree
-	dataMap := make(map[uint][]repSub)
+	dataMap := make(map[uint][]*repSub)
 	for _, row := range data {
-		node := repSub{}
-		node.Id = row.Id
-		node.Pid = row.Pid
-		node.Name = row.Name
-		dataMap[row.Pid] = append(dataMap[row.Pid], node)
+	    pid := row.Pid
+		node := &repSub{
+		    repDetail{
+		        Id: row.Id,
+		        Pid: pid,
+		        Name: row.Name,
+            },
+            nil,
+        }
+		dataMap[pid] = append(dataMap[pid], node)
 	}
 	retData := walk(0, dataMap)
 
