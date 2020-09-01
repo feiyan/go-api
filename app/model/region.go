@@ -11,6 +11,11 @@ type Region struct {
 	Name string `json:"name"`
 }
 
+type RegionTree struct {
+	Region
+	Children []RegionTree
+}
+
 // setup table_name
 // if not, the default table name will be model_Name+s
 func (region *Region) TableName() string {
@@ -32,8 +37,27 @@ func (region *Region) Insert() (id uint, err error) {
 }
 
 // fetch regions by Pid
+func (region *Region) FetchTree(pid uint) (returnData []RegionTree, err error) {
+	data, _ := region.FetchByPid(pid)
+	if data == nil {
+		return
+	}
+	for _, row := range data {
+		children, _ := region.FetchTree(row.Id)
+		node := RegionTree{}
+		node.Id = row.Id
+		node.Pid = row.Pid
+		node.Name = row.Name
+		node.Children = children
+		returnData = append(returnData, node)
+	}
+	return
+}
+
+// fetch regions by Pid
 func (region *Region) FetchByPid(pid uint) (returnData []Region, err error) {
-	if err = orm.Mysql.Where("pid = ?", pid).Find(&returnData).Error; err != nil {
+	err = orm.Mysql.Where("pid = ?", pid).Find(&returnData).Error
+	if err != nil {
 		return
 	}
 	return

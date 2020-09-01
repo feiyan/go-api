@@ -23,7 +23,7 @@ A Restful API Services Based on Golang/Gin
 - [logrus： github.com/sirupsen/logrus](#https://github.com/sirupsen/logrus)
 
 ### Docs
-- [gorm：主要复杂复习、事务和锁](#https://gorm.io/zh_CN/docs/query.html)
+- [gorm：主要复杂查询、事务和锁](#https://gorm.io/zh_CN/docs/query.html)
 
 ### Extra 不实现
 - 前台： Python 或者 PHP渲染

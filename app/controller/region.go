@@ -126,8 +126,15 @@ func Sub(c *gin.Context) {
 	}
 
 	// fetch data
-	region := model.Region{}
-	data, err := region.FetchByPid(req.Pid)
+	var data interface{}
+	var err interface{ Error() string }
+	if req.Pid > 0 {
+		region := model.Region{}
+		data, err = region.FetchByPid(req.Pid)
+	} else {
+		region := model.RegionTree{}
+		data, err = region.FetchTree(0)
+	}
 
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
