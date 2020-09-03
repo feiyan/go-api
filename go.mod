@@ -10,5 +10,6 @@ require (
 	github.com/jinzhu/gorm v1.9.16
 	github.com/onsi/ginkgo v1.14.0 // indirect
 	github.com/sirupsen/logrus v1.6.0
+	go.mongodb.org/mongo-driver v1.4.1
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 )
